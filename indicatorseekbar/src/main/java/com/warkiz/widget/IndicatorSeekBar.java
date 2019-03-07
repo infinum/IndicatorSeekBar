@@ -31,6 +31,8 @@ import android.view.animation.Animation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * created by zhuangguangquan on 2017/9/1
@@ -43,6 +45,7 @@ import java.math.BigDecimal;
  */
 
 public class IndicatorSeekBar extends View {
+
     private static final int THUMB_MAX_WIDTH = 30;
     private static final String FORMAT_PROGRESS = "${PROGRESS}";
     private static final String FORMAT_TICK_TEXT = "${TICK_TEXT}";
@@ -68,12 +71,17 @@ public class IndicatorSeekBar extends View {
     private float mMax;
     private float mMin;
     private float mProgress;
+    /**
+     * Initial progress set in layout. Variable is used when values are dynamically changed to preserve initial progress.
+     */
+    private float mInitialLayoutProgress;
     private boolean mIsFloatProgress;// true for the progress value in float,otherwise in int.
     private int mScale = 1;//the scale of the float progress.
     private boolean mUserSeekable;//true if the user can seek to change the progress,otherwise only can be changed by setProgress().
     private boolean mOnlyThumbDraggable;//only drag the seek bar's thumb can be change the progress
     private boolean mSeekSmoothly;//seek continuously
     private float[] mProgressArr;//save the progress which at tickMark position.
+    private float[] mCustomProgressArr;
     private boolean mR2L;//right to left,compat local problem.
     //tick texts
     private boolean mShowTickText;//the palace where the tick text show .
@@ -138,6 +146,8 @@ public class IndicatorSeekBar extends View {
     private boolean mHideThumb;
     private boolean mAdjustAuto;
 
+    private OnProgressChangeListener onProgressChangeListener;
+
     public IndicatorSeekBar(Context context) {
         this(context, null);
     }
@@ -155,6 +165,10 @@ public class IndicatorSeekBar extends View {
         this.mContext = context;
         initAttrs(mContext, attrs);
         initParams();
+    }
+
+    public void addOnProgressChangeListener(OnProgressChangeListener onProgressChangeListener) {
+        this.onProgressChangeListener = onProgressChangeListener;
     }
 
     /**
@@ -187,6 +201,7 @@ public class IndicatorSeekBar extends View {
         mMax = ta.getFloat(R.styleable.IndicatorSeekBar_isb_max, builder.max);
         mMin = ta.getFloat(R.styleable.IndicatorSeekBar_isb_min, builder.min);
         mProgress = ta.getFloat(R.styleable.IndicatorSeekBar_isb_progress, builder.progress);
+        mInitialLayoutProgress = ta.getFloat(R.styleable.IndicatorSeekBar_isb_progress, builder.progress);
         mIsFloatProgress = ta.getBoolean(R.styleable.IndicatorSeekBar_isb_progress_value_float, builder.progressValueFloat);
         mUserSeekable = ta.getBoolean(R.styleable.IndicatorSeekBar_isb_user_seekable, builder.userSeekable);
         mClearPadding = ta.getBoolean(R.styleable.IndicatorSeekBar_isb_clear_default_padding, builder.clearPadding);
@@ -194,7 +209,8 @@ public class IndicatorSeekBar extends View {
         mSeekSmoothly = ta.getBoolean(R.styleable.IndicatorSeekBar_isb_seek_smoothly, builder.seekSmoothly);
         mR2L = ta.getBoolean(R.styleable.IndicatorSeekBar_isb_r2l, builder.r2l);
         //track
-        mBackgroundTrackSize = ta.getDimensionPixelSize(R.styleable.IndicatorSeekBar_isb_track_background_size, builder.trackBackgroundSize);
+        mBackgroundTrackSize =
+            ta.getDimensionPixelSize(R.styleable.IndicatorSeekBar_isb_track_background_size, builder.trackBackgroundSize);
         mProgressTrackSize = ta.getDimensionPixelSize(R.styleable.IndicatorSeekBar_isb_track_progress_size, builder.trackProgressSize);
         mBackgroundTrackColor = ta.getColor(R.styleable.IndicatorSeekBar_isb_track_background_color, builder.trackBackgroundColor);
         mProgressTrackColor = ta.getColor(R.styleable.IndicatorSeekBar_isb_track_progress_color, builder.trackProgressColor);
@@ -238,6 +254,8 @@ public class IndicatorSeekBar extends View {
     }
 
     private void initParams() {
+        collectTicksInfo();
+
         initProgressRangeValue();
         if (mBackgroundTrackSize > mProgressTrackSize) {
             mBackgroundTrackSize = mProgressTrackSize;
@@ -259,29 +277,61 @@ public class IndicatorSeekBar extends View {
         measureTickTextsBonds();
         lastProgress = mProgress;
 
-        collectTicksInfo();
-
         mProgressTrack = new RectF();
         mBackgroundTrack = new RectF();
         initDefaultPadding();
         initIndicatorContentView();
+
+        if (mCustomProgressArr != null) {
+            autoAdjustThumb();
+        }
+    }
+
+    public void setTickPositions(List<Float> positions) {
+        if (positions.size() < 2) {
+            return;
+        }
+
+        Collections.sort(positions);
+        // always add minimum
+        setMin(positions.get(0));
+        setMax(positions.get(positions.size() - 1));
+
+        mTicksCount = positions.size();
+        mCustomProgressArr = new float[mTicksCount];
+
+        int i = 0;
+        for (float position : positions) {
+            mCustomProgressArr[i] = position;
+            i++;
+        }
+
+        initParams();
+        initSeekBarInfo();
+        refreshSeekBarLocation();
     }
 
     private void collectTicksInfo() {
         if (mTicksCount < 0 || mTicksCount > 50) {
             throw new IllegalArgumentException("the Argument: TICK COUNT must be limited between (0-50), Now is " + mTicksCount);
         }
+
         if (mTicksCount != 0) {
             mTickMarksX = new float[mTicksCount];
             if (mShowTickText) {
                 mTextCenterX = new float[mTicksCount];
                 mTickTextsWidth = new float[mTicksCount];
             }
-            mProgressArr = new float[mTicksCount];
-            for (int i = 0; i < mProgressArr.length; i++) {
-                mProgressArr[i] = mMin + i * (mMax - mMin) / ((mTicksCount - 1) > 0 ? (mTicksCount - 1) : 1);
-            }
 
+            if (mCustomProgressArr != null) {
+                mProgressArr = mCustomProgressArr;
+                mProgress = getMin();
+            } else {
+                mProgressArr = new float[mTicksCount];
+                for (int i = 0; i < mProgressArr.length; i++) {
+                    mProgressArr[i] = mMin + i * (mMax - mMin) / ((mTicksCount - 1) > 0 ? (mTicksCount - 1) : 1);
+                }
+            }
         }
     }
 
@@ -298,6 +348,8 @@ public class IndicatorSeekBar extends View {
     }
 
     private void initProgressRangeValue() {
+        mProgress = mInitialLayoutProgress;
+
         if (mMax < mMin) {
             throw new IllegalArgumentException("the Argument: MAX's value must be larger than MIN's.");
         }
@@ -375,7 +427,8 @@ public class IndicatorSeekBar extends View {
         //init TickTexts Y Location
         if (needDrawText()) {
             mTextPaint.getTextBounds("j", 0, 1, mRect);
-            mTickTextY = mPaddingTop + mCustomDrawableMaxHeight + Math.round(mRect.height() - mTextPaint.descent()) + SizeUtils.dp2px(mContext, 3);
+            mTickTextY =
+                mPaddingTop + mCustomDrawableMaxHeight + Math.round(mRect.height() - mTextPaint.descent()) + SizeUtils.dp2px(mContext, 3);
             mThumbTextY = mTickTextY;
         }
         //init tick's X and text's X location;
@@ -383,9 +436,10 @@ public class IndicatorSeekBar extends View {
             return;
         }
         initTextsArray();
+
         //adjust thumb auto,so find out the closest progress in the mProgressArr array and replace it.
         //it is not necessary to adjust thumb while count is less than 2.
-        if (mTicksCount > 2) {
+        if (mTicksCount >= 2) {
             mProgress = mProgressArr[getClosestIndex()];
             lastProgress = mProgress;
         }
@@ -399,6 +453,8 @@ public class IndicatorSeekBar extends View {
         if (mShowTickText) {
             mTickTextsArr = new String[mTicksCount];
         }
+
+        float range = getMax() - getMin();
         for (int i = 0; i < mTickMarksX.length; i++) {
             if (mShowTickText) {
                 mTickTextsArr[i] = getTickTextByPosition(i);
@@ -406,7 +462,12 @@ public class IndicatorSeekBar extends View {
                 mTickTextsWidth[i] = mRect.width();
                 mTextCenterX[i] = mPaddingLeft + mSeekBlockLength * i;
             }
-            mTickMarksX[i] = mPaddingLeft + mSeekBlockLength * i;
+
+            if (mCustomProgressArr != null) {
+                mTickMarksX[i] = mPaddingLeft + ((mCustomProgressArr[i] - getMin()) / range) * mSeekLength;
+            } else {
+                mTickMarksX[i] = mPaddingLeft + mSeekBlockLength * i;
+            }
         }
     }
 
@@ -521,12 +582,14 @@ public class IndicatorSeekBar extends View {
                     continue;
                 }
             }
+
             if (mTickMarksEndsHide) {
                 if (i == 0 || i == mTickMarksX.length - 1) {
                     continue;
                 }
             }
-            if (i == getThumbPosOnTick() && mTicksCount > 2 && !mSeekSmoothly) {
+
+            if (i == getThumbPosOnTick() && mTicksCount > 2 && !mSeekSmoothly && mCustomProgressArr != null) {
                 continue;
             }
             if (i <= thumbPosFloat) {
@@ -534,6 +597,7 @@ public class IndicatorSeekBar extends View {
             } else {
                 mStockPaint.setColor(getRightSideTickColor());
             }
+
             if (mTickMarksDrawable != null) {
                 if (mSelectTickMarksBitmap == null || mUnselectTickMarksBitmap == null) {
                     initTickMarksBitmap();
@@ -542,10 +606,12 @@ public class IndicatorSeekBar extends View {
                     //please check your selector drawable's format and correct.
                     throw new IllegalArgumentException("the format of the selector TickMarks drawable is wrong!");
                 }
-                if (i <= thumbPosFloat) {
-                    canvas.drawBitmap(mSelectTickMarksBitmap, mTickMarksX[i] - mUnselectTickMarksBitmap.getWidth() / 2.0f, mProgressTrack.top - mUnselectTickMarksBitmap.getHeight() / 2.0f, mStockPaint);
+                if (mProgressArr[i] <= getProgress()) {
+                    canvas.drawBitmap(mSelectTickMarksBitmap, mTickMarksX[i] - mSelectTickMarksBitmap.getWidth() / 2.0f,
+                        mProgressTrack.top - mUnselectTickMarksBitmap.getHeight() / 2.0f, mStockPaint);
                 } else {
-                    canvas.drawBitmap(mUnselectTickMarksBitmap, mTickMarksX[i] - mUnselectTickMarksBitmap.getWidth() / 2.0f, mProgressTrack.top - mUnselectTickMarksBitmap.getHeight() / 2.0f, mStockPaint);
+                    canvas.drawBitmap(mUnselectTickMarksBitmap, mTickMarksX[i] - mUnselectTickMarksBitmap.getWidth() / 2.0f,
+                        mProgressTrack.top - mUnselectTickMarksBitmap.getHeight() / 2.0f, mStockPaint);
                 }
                 continue;
             }
@@ -559,9 +625,11 @@ public class IndicatorSeekBar extends View {
                 } else {
                     dividerTickHeight = getRightSideTrackSize();
                 }
-                canvas.drawRect(mTickMarksX[i] - rectWidth, mProgressTrack.top - dividerTickHeight / 2.0f, mTickMarksX[i] + rectWidth, mProgressTrack.top + dividerTickHeight / 2.0f, mStockPaint);
+                canvas.drawRect(mTickMarksX[i] - rectWidth, mProgressTrack.top - dividerTickHeight / 2.0f, mTickMarksX[i] + rectWidth,
+                    mProgressTrack.top + dividerTickHeight / 2.0f, mStockPaint);
             } else if (mShowTickMarksType == TickMarkType.SQUARE) {
-                canvas.drawRect(mTickMarksX[i] - mTickMarksSize / 2.0f, mProgressTrack.top - mTickMarksSize / 2.0f, mTickMarksX[i] + mTickMarksSize / 2.0f, mProgressTrack.top + mTickMarksSize / 2.0f, mStockPaint);
+                canvas.drawRect(mTickMarksX[i] - mTickMarksSize / 2.0f, mProgressTrack.top - mTickMarksSize / 2.0f,
+                    mTickMarksX[i] + mTickMarksSize / 2.0f, mProgressTrack.top + mTickMarksSize / 2.0f, mStockPaint);
             }
         }
     }
@@ -613,9 +681,11 @@ public class IndicatorSeekBar extends View {
             }
             mStockPaint.setAlpha(255);
             if (mIsTouching) {
-                canvas.drawBitmap(mPressedThumbBitmap, thumbCenterX - mPressedThumbBitmap.getWidth() / 2.0f, mProgressTrack.top - mPressedThumbBitmap.getHeight() / 2.0f, mStockPaint);
+                canvas.drawBitmap(mPressedThumbBitmap, thumbCenterX - mPressedThumbBitmap.getWidth() / 2.0f,
+                    mProgressTrack.top - mPressedThumbBitmap.getHeight() / 2.0f, mStockPaint);
             } else {
-                canvas.drawBitmap(mThumbBitmap, thumbCenterX - mThumbBitmap.getWidth() / 2.0f, mProgressTrack.top - mThumbBitmap.getHeight() / 2.0f, mStockPaint);
+                canvas.drawBitmap(mThumbBitmap, thumbCenterX - mThumbBitmap.getWidth() / 2.0f,
+                    mProgressTrack.top - mThumbBitmap.getHeight() / 2.0f, mStockPaint);
             }
         } else {
             if (mIsTouching) {
@@ -700,7 +770,19 @@ public class IndicatorSeekBar extends View {
 
     private float getThumbPosOnTickFloat() {
         if (mTicksCount != 0) {
-            return (getThumbCenterX() - mPaddingLeft) / mSeekBlockLength;
+            if (mCustomProgressArr != null) {
+                int ticksBeforeThumb = 0;
+                for (int i=0;i<mTicksCount;i++) {
+                    if (mCustomProgressArr[i] < getThumbCenterX()) {
+                        ticksBeforeThumb++;
+                    } else {
+                        break;
+                    }
+                }
+                return ticksBeforeThumb;
+            } else {
+                return (getThumbCenterX() - mPaddingLeft) / mSeekBlockLength;
+            }
         }
         return 0;
     }
@@ -807,14 +889,14 @@ public class IndicatorSeekBar extends View {
                         break;
                     default:
                         //the color selector file was set by a wrong format , please see above to correct.
-                        throw new IllegalArgumentException("the selector color file you set for the argument: isb_thumb_color is in wrong format.");
+                        throw new IllegalArgumentException(
+                            "the selector color file you set for the argument: isb_thumb_color is in wrong format.");
                 }
             }
         } else {
             //the color selector file was set by a wrong format , please see above to correct.
             throw new IllegalArgumentException("the selector color file you set for the argument: isb_thumb_color is in wrong format.");
         }
-
     }
 
     /**
@@ -881,12 +963,14 @@ public class IndicatorSeekBar extends View {
                         break;
                     default:
                         //the color selector file was set by a wrong format , please see above to correct.
-                        throw new IllegalArgumentException("the selector color file you set for the argument: isb_tick_marks_color is in wrong format.");
+                        throw new IllegalArgumentException(
+                            "the selector color file you set for the argument: isb_tick_marks_color is in wrong format.");
                 }
             }
         } else {
             //the color selector file was set by a wrong format , please see above to correct.
-            throw new IllegalArgumentException("the selector color file you set for the argument: isb_tick_marks_color is in wrong format.");
+            throw new IllegalArgumentException(
+                "the selector color file you set for the argument: isb_tick_marks_color is in wrong format.");
         }
     }
 
@@ -960,12 +1044,14 @@ public class IndicatorSeekBar extends View {
                         break;
                     default:
                         //the color selector file was set by a wrong format , please see above to correct.
-                        throw new IllegalArgumentException("the selector color file you set for the argument: isb_tick_texts_color is in wrong format.");
+                        throw new IllegalArgumentException(
+                            "the selector color file you set for the argument: isb_tick_texts_color is in wrong format.");
                 }
             }
         } else {
             //the color selector file was set by a wrong format , please see above to correct.
-            throw new IllegalArgumentException("the selector color file you set for the argument: isb_tick_texts_color is in wrong format.");
+            throw new IllegalArgumentException(
+                "the selector color file you set for the argument: isb_tick_texts_color is in wrong format.");
         }
     }
 
@@ -1073,7 +1159,8 @@ public class IndicatorSeekBar extends View {
      * <p>
      * <?xml version="1.0" encoding="utf-8"?>
      * <selector xmlns:android="http://schemas.android.com/apk/res/android">
-     * <item android:drawable="@drawable/ic_launcher" android:state_selected="true" />  <!--this drawable is for thickMarks which thumb swept-->
+     * <item android:drawable="@drawable/ic_launcher" android:state_selected="true" />  <!--this drawable is for thickMarks which thumb
+     * swept-->
      * <item android:drawable="@drawable/ic_launcher_round" />  <!--for thickMarks which thumb haven't reached-->
      * </selector>
      */
@@ -1114,7 +1201,6 @@ public class IndicatorSeekBar extends View {
             mUnselectTickMarksBitmap = getDrawBitmap(mTickMarksDrawable, false);
             mSelectTickMarksBitmap = mUnselectTickMarksBitmap;
         }
-
     }
 
     @Override
@@ -1282,7 +1368,8 @@ public class IndicatorSeekBar extends View {
             mFaultTolerance = SizeUtils.dp2px(mContext, 5);
         }
         boolean inWidthRange = mX >= (mPaddingLeft - 2 * mFaultTolerance) && mX <= (mMeasuredWidth - mPaddingRight + 2 * mFaultTolerance);
-        boolean inHeightRange = mY >= mProgressTrack.top - mThumbTouchRadius - mFaultTolerance && mY <= mProgressTrack.top + mThumbTouchRadius + mFaultTolerance;
+        boolean inHeightRange = mY >= mProgressTrack.top - mThumbTouchRadius - mFaultTolerance
+            && mY <= mProgressTrack.top + mThumbTouchRadius + mFaultTolerance;
         return inWidthRange && inHeightRange;
     }
 
@@ -1319,16 +1406,15 @@ public class IndicatorSeekBar extends View {
         }
         if (mIndicator == null) {
             mIndicator = new Indicator(mContext,
-                    this,
-                    mIndicatorColor,
-                    mShowIndicatorType,
-                    mIndicatorTextSize,
-                    mIndicatorTextColor,
-                    mIndicatorContentView,
-                    mIndicatorTopContentView);
+                this,
+                mIndicatorColor,
+                mShowIndicatorType,
+                mIndicatorTextSize,
+                mIndicatorTextColor,
+                mIndicatorContentView,
+                mIndicatorTopContentView);
             this.mIndicatorContentView = mIndicator.getInsideContentView();
         }
-
     }
 
     private void updateStayIndicator() {
@@ -1366,21 +1452,16 @@ public class IndicatorSeekBar extends View {
     }
 
     private boolean autoAdjustThumb() {
-        if (mTicksCount < 3 || !mSeekSmoothly) {//it is not necessary to adjust while count less than 2.
-            return false;
-        }
         if (!mAdjustAuto) {
             return false;
         }
-        final int closestIndex = getClosestIndex();
         final float touchUpProgress = mProgress;
-        ValueAnimator animator = ValueAnimator.ofFloat(0, Math.abs(touchUpProgress - mProgressArr[closestIndex]));
-        animator.start();
+        ValueAnimator animator = ValueAnimator.ofFloat(0, Math.abs(touchUpProgress - mProgressArr[getClosestIndex()]));
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 lastProgress = mProgress;
-                if (touchUpProgress - mProgressArr[closestIndex] > 0) {
+                if (touchUpProgress - mProgressArr[getClosestIndex()] > 0) {
                     mProgress = touchUpProgress - (Float) animation.getAnimatedValue();
                 } else {
                     mProgress = touchUpProgress + (Float) animation.getAnimatedValue();
@@ -1395,6 +1476,12 @@ public class IndicatorSeekBar extends View {
                 invalidate();
             }
         });
+        animator.start();
+
+
+        if (onProgressChangeListener != null) {
+            onProgressChangeListener.onProgressChanged(mProgressArr[getClosestIndex()]);
+        }
         return true;
     }
 
@@ -1635,6 +1722,11 @@ public class IndicatorSeekBar extends View {
         refreshThumbCenterXByProgress(mProgress);
         postInvalidate();
         updateStayIndicator();
+
+        // make sure it is not savedInstanceState that called this
+        if (mProgressArr != null && mCustomProgressArr != null) {
+            autoAdjustThumb();
+        }
     }
 
     /**
@@ -1755,7 +1847,8 @@ public class IndicatorSeekBar extends View {
      */
     //< ?xml version="1.0" encoding="utf-8"?>
     //<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    //<item android:drawable="@drawable/ic_launcher" android:state_selected="true" />  < !--this drawable is for thickMarks which thumb swept-->
+    //<item android:drawable="@drawable/ic_launcher" android:state_selected="true" />  < !--this drawable is for thickMarks which thumb
+    // swept-->
     //<item android:drawable="@drawable/ic_launcher_round" />  < !--for thickMarks which thumb haven't reached-->
     //</selector>
     public void setTickMarksDrawable(Drawable drawable) {
@@ -1791,7 +1884,8 @@ public class IndicatorSeekBar extends View {
      */
     //<?xml version="1.0" encoding="utf-8"?>
     //<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    //<item android:color="@color/colorAccent" android:state_selected="true" />  <!--this color is for marks those are at left side of thumb-->
+    //<item android:color="@color/colorAccent" android:state_selected="true" />  <!--this color is for marks those are at left side of
+    // thumb-->
     //<item android:color="@color/color_gray" />                                 <!--for marks those are at right side of thumb-->
     //</selector>
     public void tickMarksColor(@NonNull ColorStateList tickMarksColorStateList) {
@@ -1819,7 +1913,8 @@ public class IndicatorSeekBar extends View {
      */
     //<?xml version="1.0" encoding="utf-8"?>
     //<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    //<item android:color="@color/colorAccent" android:state_selected="true" />  <!--this color is for texts those are at left side of thumb-->
+    //<item android:color="@color/colorAccent" android:state_selected="true" />  <!--this color is for texts those are at left side of
+    // thumb-->
     //<item android:color="@color/color_blue" android:state_hovered="true" />     <!--for thumb below text-->
     //<item android:color="@color/color_gray" />                                 <!--for texts those are at right side of thumb-->
     //</selector>
@@ -1992,6 +2087,4 @@ public class IndicatorSeekBar extends View {
 
 
     /*------------------API END-------------------*/
-
-
 }

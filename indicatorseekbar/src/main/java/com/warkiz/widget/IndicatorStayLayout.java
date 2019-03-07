@@ -3,6 +3,7 @@ package com.warkiz.widget;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -36,6 +37,14 @@ public class IndicatorStayLayout extends LinearLayout {
             layoutIndicator(getChildAt(i), i);
         }
         super.onFinishInflate();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (getChildCount() > 0) {
+            return getChildAt(1).onTouchEvent(event);
+        }
+        return super.onTouchEvent(event);
     }
 
     /**

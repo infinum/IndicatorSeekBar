@@ -1,43 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".MainActivity"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.warkiz.widget.IndicatorStayLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:id="@+id/seekBarStayLayout"
+        android:layout_marginTop="70dp">
 
-        <android.support.design.widget.TabLayout
-            android:id="@+id/tabLayout"
+        <com.warkiz.widget.IndicatorSeekBar
+            android:id="@+id/seekBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@color/colorPrimaryDark"
-            app:tabGravity="center"
-            app:tabMode="scrollable"
-            app:tabSelectedTextColor="#FF4081"
-            app:tabTextColor="#FFF" />
+            app:isb_max="2000"
+            app:isb_min="0"
+            app:isb_progress="900"
+            app:isb_seek_smoothly="true"
+            app:isb_ticks_count="7"
+            app:isb_show_tick_marks_type="oval"
+            app:isb_tick_marks_size="13dp"
+            app:isb_tick_marks_drawable="@drawable/tick_marks_drawable"
+            app:isb_show_tick_texts="false"
+            app:isb_tick_texts_size="15sp"
+            app:isb_tick_texts_color="@color/abanka_orange"
+            app:isb_thumb_color="@color/abanka_orange"
+            app:isb_thumb_size="15dp"
+            app:isb_show_indicator="rectangle"
+            app:isb_indicator_color="@color/abanka_orange"
+            app:isb_indicator_text_color="@android:color/white"
+            app:isb_indicator_text_size="16sp"
+            app:isb_track_background_color="@color/abanka_gray"
+            app:isb_track_background_size="2dp"
+            app:isb_track_progress_color="@color/abanka_orange"
+            app:isb_track_progress_size="2dp"
+            app:isb_only_thumb_draggable="false"/>
 
-        <ImageView
-            android:visibility="gone"
-            android:id="@+id/buy_me_a_coffee"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_more" />
-    </LinearLayout>
+    </com.warkiz.widget.IndicatorStayLayout>
 
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/viewPager"
+    <com.warkiz.widget.IndicatorStayLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scrollbars="none" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="70dp">
+
+        <com.warkiz.widget.IndicatorSeekBar
+            android:id="@+id/seekBar2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:isb_max="2000"
+            app:isb_min="0"
+            app:isb_progress="900"
+            app:isb_seek_smoothly="true"
+            app:isb_ticks_count="7"
+            app:isb_show_tick_marks_type="oval"
+            app:isb_tick_marks_size="13dp"
+            app:isb_tick_marks_drawable="@drawable/tick_marks_drawable"
+            app:isb_show_tick_texts="false"
+            app:isb_tick_texts_size="15sp"
+            app:isb_tick_texts_color="@color/abanka_orange"
+            app:isb_thumb_color="@color/abanka_orange"
+            app:isb_thumb_size="15dp"
+            app:isb_show_indicator="rectangle"
+            app:isb_indicator_color="@color/abanka_orange"
+            app:isb_indicator_text_color="@android:color/white"
+            app:isb_indicator_text_size="16sp"
+            app:isb_track_background_color="@color/abanka_gray"
+            app:isb_track_background_size="2dp"
+            app:isb_track_progress_color="@color/abanka_orange"
+            app:isb_track_progress_size="2dp"
+            app:isb_only_thumb_draggable="false"/>
+
+    </com.warkiz.widget.IndicatorStayLayout>
 
 </LinearLayout>
-
