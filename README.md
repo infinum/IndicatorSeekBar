@@ -11,65 +11,32 @@ implementation 'com.github.warkiz.widget:indicatorseekbar:2.1.2'
 ```
 
 ## Usage
-#### xml
-
-```xml
-<com.warkiz.widget.IndicatorSeekBar
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    app:isb_max="100"
-    app:isb_min="-1.0"
-    app:isb_progress="25"
-    app:isb_seek_smoothly="true"
-    app:isb_ticks_count="5"
-    app:isb_show_tick_marks_type="oval"
-    app:isb_tick_marks_size="13dp"
-    app:isb_tick_marks_drawable="@mipmap/ic_launcher"
-    app:isb_show_tick_texts="true"
-    app:isb_tick_texts_size="15sp"
-    app:isb_tick_texts_color="@color/color_blue"
-    app:isb_thumb_color="@color/color_green"
-    app:isb_thumb_size="20dp"
-    app:isb_show_indicator="rounded_rectangle"
-    app:isb_indicator_color="@color/color_gray"
-    app:isb_indicator_text_color="@color/colorAccent"
-    app:isb_indicator_text_size="18sp"
-    app:isb_track_background_color="@color/color_gray"
-    app:isb_track_background_size="2dp"
-    app:isb_track_progress_color="@color/color_blue"
-    app:isb_track_progress_size="4dp"
-    app:isb_only_thumb_draggable="false"/>
-```
-
 #### Java
 
-```Java
+```Kotlin
 
- IndicatorSeekBar seekBar = IndicatorSeekBar
-                .with(getContext())
-                .max(110)
-                .min(10)
-                .progress(53)
-                .tickCount(7)
-                .showTickMarksType(TickMarkType.OVAL)
-                .tickMarksColor(getResources().getColor(R.color.color_blue, null))
-                .tickMarksSize(13)//dp
-                .showTickTexts(true)
-                .tickTextsColor(getResources().getColor(R.color.color_pink))
-                .tickTextsSize(13)//sp
-                .tickTextsTypeFace(Typeface.MONOSPACE)
-                .showIndicatorType(IndicatorType.ROUNDED_RECTANGLE)
-                .indicatorColor(getResources().getColor(R.color.color_blue))
-                .indicatorTextColor(Color.parseColor("#ffffff"))
-                .indicatorTextSize(13)//sp
-                .thumbColor(getResources().getColor(R.color.colorAccent, null))
-                .thumbSize(14)
-                .trackProgressColor(getResources().getColor(R.color.colorAccent,null))
-                .trackProgressSize(4)
-                .trackBackgroundColor(getResources().getColor(R.color.color_gray))
-                .trackBackgroundSize(2)
-		.onlyThumbDraggable(false)
-                .build();
+ seekBar.setIndicatorTextFormat("€\${PROGRESS}")
+ val tickPositions = listOf(70.00f, 210.00f, 260.00f, 420.00f, 620.00f, 1000.00f)
+ seekBar.setTickPositions(tickPositions)
+ seekBar.setProgress(210f)
+
+ seekBar2.setIndicatorTextFormat("$\${PROGRESS}")
+ val newTickPositions = listOf(0f, 5000f)
+ val newTickPositions2 = listOf(0f, 500f, 1500f)
+ val newTickPositions3 = listOf(200.00f, 600.00f, 3000.00f)
+ seekBar2.setTickPositions(newTickPositions3)
+
+ seekBar.addOnProgressChangeListener {
+     Log.d("TEST_SEEK_BAR", "Stop $it")
+
+     val rand = (0..2).random()
+     when (rand) {
+         0 -> seekBar2.setTickPositions(newTickPositions)
+         1 -> seekBar2.setTickPositions(newTickPositions2)
+         else -> seekBar2.setTickPositions(newTickPositions3)
+     }
+
+ }
 
 ```
 
