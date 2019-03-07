@@ -12,16 +12,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         seekBar.setIndicatorTextFormat("€\${PROGRESS}")
-        val tickPositions = floatArrayOf(70.00f, 210.00f, 260.00f, 420.00f, 620.00f, 1000.00f).toList()
+        val tickPositions = listOf(70.00f, 210.00f, 260.00f, 420.00f, 620.00f, 1000.00f)
         seekBar.setTickPositions(tickPositions)
         seekBar.setProgress(210f)
 
-        seekBar2.setIndicatorTextFormat("€\${PROGRESS}")
-        val newTickPositions = floatArrayOf(0f, 5000f).toList()
-        val newTickPositions2 = floatArrayOf(0f, 500f, 1500f).toList()
-        val newTickPositions3 = floatArrayOf(200.00f, 600.00f, 3000.00f).toList()
+        seekBar2.setIndicatorTextFormat("$\${PROGRESS}")
+        val newTickPositions = listOf(0f, 5000f)
+        val newTickPositions2 = listOf(0f, 500f, 1500f)
+        val newTickPositions3 = listOf(200.00f, 600.00f, 3000.00f)
         seekBar2.setTickPositions(newTickPositions3)
-        seekBar2.setProgress(210f)
 
         seekBar.addOnProgressChangeListener {
             Log.d("TEST_SEEK_BAR", "Stop $it")

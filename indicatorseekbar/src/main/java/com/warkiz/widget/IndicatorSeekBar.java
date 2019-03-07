@@ -309,6 +309,7 @@ public class IndicatorSeekBar extends View {
         initParams();
         initSeekBarInfo();
         refreshSeekBarLocation();
+        setProgress(mMin);
     }
 
     private void collectTicksInfo() {
