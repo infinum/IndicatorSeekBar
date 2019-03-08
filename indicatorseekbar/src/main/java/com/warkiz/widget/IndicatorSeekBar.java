@@ -1799,6 +1799,8 @@ public class IndicatorSeekBar extends View {
 
     /**
      * call this will do not draw thumb, true if hide.
+     *
+     * @param hide true to hide thumb
      */
     public void hideThumb(boolean hide) {
         mHideThumb = hide;
@@ -1807,6 +1809,8 @@ public class IndicatorSeekBar extends View {
 
     /**
      * call this will do not draw the text which below thumb. true if hide.
+     *
+     * @param hide true to hide thumb text
      */
     public void hideThumbText(boolean hide) {
         mShowThumbText = !hide;
@@ -2062,7 +2066,7 @@ public class IndicatorSeekBar extends View {
     /**
      * Sets the tick count
      *
-     * @param tickCount
+     * @param tickCount number of ticks
      */
     public synchronized void setTickCount(int tickCount) {
         if (mTicksCount < 0 || mTicksCount > 50) {

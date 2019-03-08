@@ -7,7 +7,7 @@
 ## Setup
 
 ```gradle
-implementation 'com.github.warkiz.widget:indicatorseekbar:2.1.2'
+implementation 'co.infinum:IndicatorSeekBar:1.0.0'
 ```
 
 ## Usage
@@ -15,28 +15,28 @@ implementation 'com.github.warkiz.widget:indicatorseekbar:2.1.2'
 
 ```Kotlin
 
- seekBar.setIndicatorTextFormat("€\${PROGRESS}")
- val tickPositions = listOf(70.00f, 210.00f, 260.00f, 420.00f, 620.00f, 1000.00f)
- seekBar.setTickPositions(tickPositions)
- seekBar.setProgress(210f)
+seekBar.setIndicatorTextFormat("€\${PROGRESS}")
+val tickPositions = listOf(70.00f, 210.00f, 260.00f, 420.00f, 620.00f, 1000.00f)
+seekBar.setTickPositions(tickPositions)
+seekBar.setProgress(210f)
 
- seekBar2.setIndicatorTextFormat("$\${PROGRESS}")
- val newTickPositions = listOf(0f, 5000f)
- val newTickPositions2 = listOf(0f, 500f, 1500f)
- val newTickPositions3 = listOf(200.00f, 600.00f, 3000.00f)
- seekBar2.setTickPositions(newTickPositions3)
+seekBar2.setIndicatorTextFormat("$\${PROGRESS}")
+val newTickPositions = listOf(0f, 5000f)
+val newTickPositions2 = listOf(0f, 500f, 1500f)
+val newTickPositions3 = listOf(200.00f, 600.00f, 3000.00f)
+seekBar2.setTickPositions(newTickPositions3)
 
- seekBar.addOnProgressChangeListener {
-     Log.d("TEST_SEEK_BAR", "Stop $it")
+seekBar.addOnProgressChangeListener {
+ Log.d("TEST_SEEK_BAR", "Stop $it")
 
-     val rand = (0..2).random()
-     when (rand) {
-         0 -> seekBar2.setTickPositions(newTickPositions)
-         1 -> seekBar2.setTickPositions(newTickPositions2)
-         else -> seekBar2.setTickPositions(newTickPositions3)
-     }
-
+ val rand = (0..2).random()
+ when (rand) {
+     0 -> seekBar2.setTickPositions(newTickPositions)
+     1 -> seekBar2.setTickPositions(newTickPositions2)
+     else -> seekBar2.setTickPositions(newTickPositions3)
  }
+
+}
 
 ```
 
