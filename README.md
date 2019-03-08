@@ -9,7 +9,7 @@ implementation 'co.infinum:IndicatorSeekBar:1.0.0'
 ```
 
 ## Usage
-#### Java
+#### Kotlin
 
 ```Kotlin
 
