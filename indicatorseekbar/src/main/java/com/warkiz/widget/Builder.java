@@ -6,18 +6,19 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
-import android.support.annotation.ArrayRes;
-import android.support.annotation.ColorInt;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
 import android.view.View;
+
+import androidx.annotation.ArrayRes;
+import androidx.annotation.ColorInt;
+import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
 
 /**
  * created by zhuangguangquan on 2018/6/3
  */
 
 public class Builder {
+
     final Context context;
     //seek bar
     float max = 100;
@@ -280,7 +281,6 @@ public class Builder {
         return this;
     }
 
-
     /**
      * set the seek bar's background track's Stroke Width
      *
@@ -426,7 +426,6 @@ public class Builder {
         return this;
     }
 
-
     /**
      * show the tick texts or not
      *
@@ -458,7 +457,8 @@ public class Builder {
      */
     //<?xml version="1.0" encoding="utf-8"?>
     //<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    //<item android:color="@color/colorAccent" android:state_selected="true" />  <!--this color is for texts those are at left side of thumb-->
+    //<item android:color="@color/colorAccent" android:state_selected="true" />  <!--this color is for texts those are at left side of
+    // thumb-->
     //<item android:color="@color/color_blue" android:state_hovered="true" />     <!--for thumb below text-->
     //<item android:color="@color/color_gray" />                                 <!--for texts those are at right side of thumb-->
     //</selector>
@@ -488,7 +488,6 @@ public class Builder {
         this.tickTextsCustomArray = tickTextsArray;
         return this;
     }
-
 
     /**
      * call this method to replace the seek bar's tickMarks' below/above tick texts.
@@ -559,7 +558,8 @@ public class Builder {
      */
     //<?xml version="1.0" encoding="utf-8"?>
     //<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    //<item android:color="@color/colorAccent" android:state_selected="true" />  <!--this color is for marks those are at left side of thumb-->
+    //<item android:color="@color/colorAccent" android:state_selected="true" />  <!--this color is for marks those are at left side of
+    // thumb-->
     //<item android:color="@color/color_gray" />                                 <!--for marks those are at right side of thumb-->
     //</selector>
     public Builder tickMarksColor(@NonNull ColorStateList tickMarksColorStateList) {
@@ -568,7 +568,8 @@ public class Builder {
     }
 
     /**
-     * set the seek bar's tick width , if tick type is divider, call this method will be not worked(tick type is divider,has a regular value 2dp).
+     * set the seek bar's tick width , if tick type is divider, call this method will be not worked(tick type is divider,has a regular
+     * value 2dp).
      *
      * @param tickMarksSize the dp size.
      * @return Builder
@@ -627,5 +628,4 @@ public class Builder {
         this.tickMarksSweptHide = tickMarksSweptHide;
         return this;
     }
-
 }

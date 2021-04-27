@@ -5,7 +5,7 @@ ext {
         "targetSdk"  : 27
     ]
     releaseConfig = [
-        "group"      : "co.infinum.IndicatorSeekBar",
+        "group"      : "co.infinum",
         "versionName": "2.1.2",
         "versionCode": 3
     ]
